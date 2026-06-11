@@ -1,0 +1,19 @@
+# Core HTTP
+requests>=2.31.0
+urllib3>=2.0.0
+
+# DNS operations (subdomain enum, email OSINT)
+dnspython>=2.4.0
+
+# SSH brute force + cred sprayer
+paramiko>=3.3.0
+
+# HTML parsing (tech fingerprinting, XSS scanner)
+beautifulsoup4>=4.12.0
+
+# Database credential spraying (optional but recommended)
+pymysql>=1.1.0        # MySQL testing
+psycopg2-binary>=2.9.9 # PostgreSQL testing
+
+# Install all at once:
+# pip install requests urllib3 dnspython paramiko beautifulsoup4 pymysql psycopg2-binary
