@@ -32,3 +32,10 @@ desktop.ini
 .idea/
 *.swp
 *.swo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
