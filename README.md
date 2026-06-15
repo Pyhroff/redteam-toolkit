@@ -3,6 +3,11 @@
 Advanced Python toolkit for authorized red team engagements.
 Built from scratch for the BTech Cybersec → Red Team Consultant track.
 
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-green)
+![CI](https://github.com/Pyhroff/redteam-toolkit/actions/workflows/ci.yml/badge.svg)
+![Purpose: Educational](https://img.shields.io/badge/Purpose-Educational%20%2F%20Authorized%20Use-orange)
+
 > **NOT a Metasploit wrapper. Not a script-kiddie collection.**
 > Every script is built with a WHY, a detection profile, and a stealthy alternative.
 
@@ -374,3 +379,9 @@ Month 4 → Post    : hash_tools + privesc_linux
 Month 5 → SE      : pretext_builder + email_osint
 Month 6 → Full    : complete HTB machines, write engagement reports
 ```
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE). Educational / portfolio project; use responsibly and only against systems you are authorized to test.
