@@ -384,7 +384,8 @@ def main():
         for key, data in sorted(TECHNIQUES.items(), key=lambda x: -x[1]["noise"]):
             bar_text = "█" * int(data["noise"]/10) + "░" * (10 - int(data["noise"]/10))
             color = "\033[91m" if data["noise"] > 70 else ("\033[93m" if data["noise"] > 40 else "\033[92m")
-            print(f"  {data['name']:<28} {color}{data['noise']:>3}/100{'\033[0m'} {data['mitre']}")
+            reset = "\033[0m"
+            print(f"  {data['name']:<28} {color}{data['noise']:>3}/100{reset} {data['mitre']}")
 
     elif args.rate:
         score = rate_command(args.rate)
