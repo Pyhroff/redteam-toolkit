@@ -38,7 +38,7 @@ Defender **will quarantine** these files. Add an exclusion:
 
 ```powershell
 # Run PowerShell as Administrator
-Add-MpPreference -ExclusionPath "C:\Users\LENOVO\OneDrive\Desktop\redteam-toolkit"
+Add-MpPreference -ExclusionPath "C:\path\to\redteam-toolkit"
 ```
 
 ---

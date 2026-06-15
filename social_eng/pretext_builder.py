@@ -2,7 +2,7 @@
 social_eng/pretext_builder.py — Social engineering pretext generator
 
 WHY THIS EXISTS:
-  Praising — your SE psychology focus means you need more than just "lie to people."
+  Effective social-engineering pretexts need more than just "lie to people."
   A good pretext has:
     • A believable identity (who are you?)
     • An authority hook (why should they listen?)

@@ -18,7 +18,7 @@ GENERATES:
 USAGE:
   python utils/report_gen.py --session engagements/session_xxx.json
   python utils/report_gen.py --session engagements/session_xxx.json \
-      --tester "Pyhroff" --org "AcmeCorp" --output report.html
+      --tester "Your Name" --org "AcmeCorp" --output report.html
   python utils/report_gen.py --session engagements/session_xxx.json --markdown
 """
 
