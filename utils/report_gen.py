@@ -26,6 +26,7 @@ import json
 import argparse
 import sys
 from datetime import datetime
+from html import escape as html_escape
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -219,6 +220,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 SEVERITY_ORDER = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
 
 
+def esc(value) -> str:
+    """Escape untrusted values before inserting them into HTML text or attributes."""
+    return html_escape(str(value if value is not None else ""), quote=True)
+
+
 def overall_risk(counts: dict) -> tuple:
     if counts.get("CRITICAL", 0) > 0:
         return "CRITICAL", "#ff4d4d"
@@ -238,18 +244,20 @@ def build_findings_html(findings: list) -> str:
     rows = ""
     sorted_f = sorted(findings, key=lambda x: SEVERITY_ORDER.get(x.get("severity", "INFO"), 99))
     for f in sorted_f:
-        sev   = f.get("severity", "INFO")
+        sev = str(f.get("severity", "INFO")).upper()
+        if sev not in SEVERITY_ORDER:
+            sev = "INFO"
         pld   = f.get("payload", "")
         rec   = f.get("recommendation", "")
-        payload_html = f'<div class="payload">{pld[:100]}</div>' if pld else ""
-        rec_html     = f'<div style="color:#8b949e;font-size:0.85em;margin-top:6px;">💡 {rec}</div>' if rec else ""
+        payload_html = f'<div class="payload">{esc(pld[:100])}</div>' if pld else ""
+        rec_html = f'<div style="color:#8b949e;font-size:0.85em;margin-top:6px;">💡 {esc(rec)}</div>' if rec else ""
         rows += f"""
         <tr>
           <td><span class="sev-badge sev-{sev}">{sev}</span></td>
-          <td>{f.get('type','')}</td>
-          <td><span class="location">{f.get('location','')}</span>{payload_html}</td>
-          <td>{f.get('detail','')}{rec_html}</td>
-          <td style="color:#8b949e;font-size:0.8em;">{f.get('timestamp','')[:16]}</td>
+          <td>{esc(f.get('type',''))}</td>
+          <td><span class="location">{esc(f.get('location',''))}</span>{payload_html}</td>
+          <td>{esc(f.get('detail',''))}{rec_html}</td>
+          <td style="color:#8b949e;font-size:0.8em;">{esc(str(f.get('timestamp',''))[:16])}</td>
         </tr>"""
 
     return f"""
@@ -264,10 +272,10 @@ def build_ports_html(ports: list) -> str:
         return '<p class="empty">No ports recorded.</p>'
     rows = "".join(f"""
       <tr>
-        <td class="port-open">{p['port']}</td>
-        <td>{p.get('state','')}</td>
-        <td>{p.get('service','')}</td>
-        <td>{p.get('banner','')[:80]}</td>
+        <td class="port-open">{esc(p.get('port',''))}</td>
+        <td>{esc(p.get('state',''))}</td>
+        <td>{esc(p.get('service',''))}</td>
+        <td>{esc(str(p.get('banner',''))[:80])}</td>
       </tr>""" for p in sorted(ports, key=lambda x: x["port"]))
     return f"""<table class="app-table">
       <tr><th>Port</th><th>State</th><th>Service</th><th>Banner</th></tr>{rows}</table>"""
@@ -281,10 +289,10 @@ def build_tech_html(tech: list) -> str:
         cves = ", ".join(t.get("cve_hints", [])[:2]) or "—"
         rows += f"""
       <tr>
-        <td>{t.get('tech','')}</td>
-        <td>{t.get('version','') or '—'}</td>
-        <td style="color:#ff8c00;font-size:0.85em;">{cves}</td>
-        <td style="color:#8b949e;font-size:0.8em;">{t.get('timestamp','')[:16]}</td>
+        <td>{esc(t.get('tech',''))}</td>
+        <td>{esc(t.get('version','') or '—')}</td>
+        <td style="color:#ff8c00;font-size:0.85em;">{esc(cves)}</td>
+        <td style="color:#8b949e;font-size:0.8em;">{esc(str(t.get('timestamp',''))[:16])}</td>
       </tr>"""
     return f"""<table class="app-table">
       <tr><th>Technology</th><th>Version</th><th>CVE Hints</th><th>Detected</th></tr>{rows}</table>"""
@@ -295,9 +303,9 @@ def build_subdomains_html(subs: list) -> str:
         return '<p class="empty">No subdomains discovered.</p>'
     rows = "".join(f"""
       <tr>
-        <td>{s.get('fqdn','')}</td>
-        <td>{', '.join(s.get('ips',[]))}</td>
-        <td style="color:#8b949e;font-size:0.8em;">{s.get('timestamp','')[:16]}</td>
+        <td>{esc(s.get('fqdn',''))}</td>
+        <td>{esc(', '.join(s.get('ips',[])))}</td>
+        <td style="color:#8b949e;font-size:0.8em;">{esc(str(s.get('timestamp',''))[:16])}</td>
       </tr>""" for s in subs)
     return f"""<table class="app-table">
       <tr><th>Subdomain</th><th>IP(s)</th><th>Found</th></tr>{rows}</table>"""
@@ -309,11 +317,11 @@ def build_creds_html(creds: list) -> str:
     banner = '<div class="sensitive-banner">⚠ SENSITIVE — Handle according to engagement rules of engagement. Do not store outside encrypted storage.</div>'
     rows = "".join(f"""
       <tr class="cred-row">
-        <td>{c.get('username','')}</td>
-        <td>{c.get('password','')}</td>
-        <td>{c.get('service','')}</td>
-        <td>{c.get('host','')}</td>
-        <td style="color:#8b949e;font-size:0.8em;">{c.get('timestamp','')[:16]}</td>
+        <td>{esc(c.get('username',''))}</td>
+        <td>{esc(c.get('password',''))}</td>
+        <td>{esc(c.get('service',''))}</td>
+        <td>{esc(c.get('host',''))}</td>
+        <td style="color:#8b949e;font-size:0.8em;">{esc(str(c.get('timestamp',''))[:16])}</td>
       </tr>""" for c in creds)
     return banner + f"""<table class="app-table">
       <tr><th>Username</th><th>Password</th><th>Service</th><th>Host</th><th>Found</th></tr>{rows}</table>"""
@@ -329,10 +337,10 @@ def build_webpaths_html(paths: list) -> str:
         color  = "#4caf50" if status == 200 else ("#ff8c00" if status in (401, 403) else "#8b949e")
         rows += f"""
       <tr>
-        <td style="color:{color};font-weight:600;">{status}</td>
-        <td><span class="location">{p.get('url','')}</span></td>
-        <td>{p.get('size','')} bytes</td>
-        <td style="color:#8b949e;font-size:0.85em;">{p.get('note','')}</td>
+        <td style="color:{color};font-weight:600;">{esc(status)}</td>
+        <td><span class="location">{esc(p.get('url',''))}</span></td>
+        <td>{esc(p.get('size',''))} bytes</td>
+        <td style="color:#8b949e;font-size:0.85em;">{esc(p.get('note',''))}</td>
       </tr>"""
     return f"""<table class="app-table">
       <tr><th>Status</th><th>URL</th><th>Size</th><th>Note</th></tr>{rows}</table>"""
@@ -420,12 +428,12 @@ def main():
         content = generate_markdown(session, args.tester, args.org)
     else:
         content = HTML_TEMPLATE.format(
-            target=session.get("target",""),
-            org=args.org,
-            session_id=session.get("session_id",""),
-            tester=args.tester,
-            date=session.get("created_at","")[:10],
-            generated=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            target=esc(session.get("target","")),
+            org=esc(args.org),
+            session_id=esc(session.get("session_id","")),
+            tester=esc(args.tester),
+            date=esc(str(session.get("created_at",""))[:10]),
+            generated=esc(datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
             count_critical=counts.get("CRITICAL",0),
             count_high=counts.get("HIGH",0),
             count_medium=counts.get("MEDIUM",0),
