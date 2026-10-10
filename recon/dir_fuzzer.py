@@ -28,7 +28,7 @@ import threading
 import random
 import time
 import sys
-from queue import Queue
+from queue import Empty, Queue
 from datetime import datetime
 from pathlib import Path
 import urllib3
@@ -100,11 +100,18 @@ def worker(queue: Queue, base_url: str, valid_codes: list, timeout: int,
     """Thread worker — each thread gets its own Session for performance."""
     with requests.Session() as session:
         session.headers["User-Agent"] = USER_AGENTS[0]
-        while not queue.empty():
-            path = queue.get()
-            fuzz_path(base_url, path, session, valid_codes, timeout,
-                      proxies, filter_size, jitter, ua_rotate)
-            queue.task_done()
+        while True:
+            try:
+                path = queue.get_nowait()
+            except Empty:
+                return
+            try:
+                fuzz_path(base_url, path, session, valid_codes, timeout,
+                          proxies, filter_size, jitter, ua_rotate)
+            except Exception as exc:
+                print(f"[-] Path check failed for {path}: {exc}")
+            finally:
+                queue.task_done()
 
 
 def recursive_fuzz(discovered_dirs: list, base_url: str, words: list,
@@ -122,11 +129,16 @@ def recursive_fuzz(discovered_dirs: list, base_url: str, words: list,
         # single-threaded recursive to avoid too much noise
         with requests.Session() as session:
             session.headers["User-Agent"] = USER_AGENTS[0]
-            while not q.empty():
-                path = q.get()
-                fuzz_path(dir_url, path, session, valid_codes, timeout,
-                          proxies, filter_size, jitter, False)
-                q.task_done()
+            while True:
+                try:
+                    path = q.get_nowait()
+                except Empty:
+                    break
+                try:
+                    fuzz_path(dir_url, path, session, valid_codes, timeout,
+                              proxies, filter_size, jitter, False)
+                finally:
+                    q.task_done()
 
 
 def build_paths(words: list, extensions: list) -> list:

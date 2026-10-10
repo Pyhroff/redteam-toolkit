@@ -18,7 +18,7 @@ ONLY use on systems you own or have written permission to test.
 import socket
 import argparse
 import threading
-from queue import Queue
+from queue import Empty, Queue
 from datetime import datetime
 
 # --- well-known port → service name mapping (extend as needed) ---
@@ -71,10 +71,17 @@ def scan_port(ip: str, port: int, grab: bool, timeout: float):
 
 def worker(queue: Queue, ip: str, grab: bool, timeout: float):
     """Thread worker — pulls ports off the queue until empty."""
-    while not queue.empty():
-        port = queue.get()
-        scan_port(ip, port, grab, timeout)
-        queue.task_done()
+    while True:
+        try:
+            port = queue.get_nowait()
+        except Empty:
+            return
+        try:
+            scan_port(ip, port, grab, timeout)
+        except Exception as exc:
+            print(f"[-] Port {port} scan failed: {exc}")
+        finally:
+            queue.task_done()
 
 
 def parse_ports(port_arg: str) -> list:
