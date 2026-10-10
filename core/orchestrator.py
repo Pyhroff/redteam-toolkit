@@ -34,7 +34,7 @@ import socket
 import threading
 import argparse
 import subprocess
-from queue import Queue
+from queue import Empty, Queue
 from datetime import datetime
 from pathlib import Path
 
@@ -72,17 +72,21 @@ def quick_scan(ip: str, ports: list, timeout: float = 1.0) -> list:
         q.put(p)
 
     def worker():
-        while not q.empty():
-            port = q.get()
+        while True:
+            try:
+                port = q.get_nowait()
+            except Empty:
+                return
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.settimeout(timeout)
                     if s.connect_ex((ip, port)) == 0:
                         with lock:
                             open_ports.append(port)
-            except Exception:
+            except OSError:
                 pass
-            q.task_done()
+            finally:
+                q.task_done()
 
     threads = [threading.Thread(target=worker) for _ in range(min(50, len(ports)))]
     for t in threads:
