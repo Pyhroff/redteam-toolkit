@@ -193,18 +193,24 @@ def parse_range(range_str: str) -> list:
     if "/" in range_str:
         return [str(ip) for ip in ipaddress.ip_network(range_str, strict=False).hosts()]
     elif "-" in range_str:
-        parts = range_str.split("-")
-        if len(parts) == 2:
-            start = ipaddress.ip_address(parts[0].strip())
-            end_parts = parts[0].strip().rsplit(".", 1)
-            end_octet = int(parts[1].strip())
-            end = ipaddress.ip_address(f"{end_parts[0]}.{end_octet}")
-            ips = []
-            current = start
-            while current <= end:
-                ips.append(str(current))
-                current += 1
-            return ips
+        start_text, end_text = (part.strip() for part in range_str.split("-", 1))
+        start = ipaddress.ip_address(start_text)
+        try:
+            end = ipaddress.ip_address(end_text)
+        except ValueError:
+            # Keep the existing IPv4 shorthand form, e.g. 192.168.1.1-50.
+            if start.version != 4 or not end_text.isdecimal():
+                raise
+            end_octet = int(end_text)
+            if not 0 <= end_octet <= 255:
+                raise ValueError("IPv4 range end must be between 0 and 255")
+            end = ipaddress.ip_address(f"{start_text.rsplit('.', 1)[0]}.{end_octet}")
+
+        if start.version != end.version:
+            raise ValueError("range endpoints must use the same IP version")
+        if int(start) > int(end):
+            raise ValueError("range start must not be greater than range end")
+        return [str(start + offset) for offset in range(int(end) - int(start) + 1)]
     return [range_str]
 
 
