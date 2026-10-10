@@ -84,16 +84,61 @@ def worker(queue: Queue, ip: str, grab: bool, timeout: float):
             queue.task_done()
 
 
-def parse_ports(port_arg: str) -> list:
-    """Parse '22,80,100-200' style input into a flat list of ints."""
-    ports = []
-    for part in port_arg.split(","):
-        if "-" in part:
-            start, end = part.split("-")
-            ports.extend(range(int(start), int(end) + 1))
-        else:
-            ports.append(int(part))
-    return sorted(set(ports))
+def parse_ports(port_arg: str) -> list[int]:
+    """Parse '22,80,100-200' and reject invalid or unsafe port ranges."""
+    if not isinstance(port_arg, str) or not port_arg.strip():
+        raise ValueError("ports must be a non-empty comma-separated list")
+
+    ports: set[int] = set()
+    for raw_part in port_arg.split(","):
+        part = raw_part.strip()
+        if not part:
+            raise ValueError("empty port entry; use values like '22,80,443' or '1-1024'")
+        try:
+            if "-" in part:
+                if part.count("-") != 1:
+                    raise ValueError
+                raw_start, raw_end = part.split("-", 1)
+                start, end = int(raw_start), int(raw_end)
+                if start > end:
+                    raise ValueError(f"descending port range: {part!r}")
+                values = range(start, end + 1)
+            else:
+                values = (int(part),)
+        except ValueError as exc:
+            if str(exc).startswith("descending port range"):
+                raise
+            raise ValueError(f"invalid port entry: {part!r}") from exc
+
+        for port in values:
+            if not 1 <= port <= 65535:
+                raise ValueError(f"port must be between 1 and 65535, got {port}")
+            ports.add(port)
+    return sorted(ports)
+
+
+def positive_int(value: str) -> int:
+    """Argparse type for strictly positive integer settings."""
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError) as exc:
+        raise argparse.ArgumentTypeError("must be a positive integer") from exc
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return parsed
+
+
+def positive_float(value: str) -> float:
+    """Argparse type for finite, strictly positive timeouts."""
+    import math
+
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError) as exc:
+        raise argparse.ArgumentTypeError("must be a positive finite number") from exc
+    if not math.isfinite(parsed) or parsed <= 0:
+        raise argparse.ArgumentTypeError("must be a positive finite number")
+    return parsed
 
 
 def main():
@@ -102,8 +147,8 @@ def main():
     parser.add_argument("-p", "--ports", default="1-1024", help="Port range or list (e.g. 22,80 or 1-1000)")
     parser.add_argument("--top100", action="store_true", help="Scan common top-100 ports")
     parser.add_argument("--banner", action="store_true", help="Attempt to grab service banners")
-    parser.add_argument("--threads", type=int, default=100, help="Number of threads (default: 100)")
-    parser.add_argument("--timeout", type=float, default=1.0, help="Connection timeout in seconds")
+    parser.add_argument("--threads", type=positive_int, default=100, help="Number of threads (default: 100)")
+    parser.add_argument("--timeout", type=positive_float, default=1.0, help="Connection timeout in seconds")
     args = parser.parse_args()
 
     try:
@@ -112,7 +157,7 @@ def main():
         print(f"[-] Cannot resolve host: {args.target}")
         return
 
-    ports = TOP_100 if args.top100 else parse_ports(args.ports)
+    try:\n        ports = TOP_100 if args.top100 else parse_ports(args.ports)\n    except ValueError as exc:\n        parser.error(str(exc))
 
     print(f"\n[*] Scanning {args.target} ({ip})")
     print(f"[*] Ports: {len(ports)} | Threads: {args.threads} | Banner: {args.banner}")
