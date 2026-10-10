@@ -38,7 +38,7 @@ import subprocess
 import platform
 import sys
 import re
-from queue import Queue
+from queue import Empty, Queue
 from datetime import datetime
 from pathlib import Path
 
@@ -175,10 +175,17 @@ def scan_host(ip: str, method: str, scan_ports: list, deep: bool):
 
 
 def worker(queue: Queue, method: str, scan_ports: list, deep: bool):
-    while not queue.empty():
-        ip = queue.get()
-        scan_host(ip, method, scan_ports, deep)
-        queue.task_done()
+    while True:
+        try:
+            ip = queue.get_nowait()
+        except Empty:
+            return
+        try:
+            scan_host(ip, method, scan_ports, deep)
+        except Exception as exc:
+            print(f"[-] Host scan failed for {ip}: {exc}")
+        finally:
+            queue.task_done()
 
 
 def parse_range(range_str: str) -> list:
