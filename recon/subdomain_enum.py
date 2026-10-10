@@ -24,7 +24,7 @@ ONLY use on domains you own or have written permission to test.
 import dns.resolver
 import argparse
 import threading
-from queue import Queue
+from queue import Empty, Queue
 from datetime import datetime
 
 found = []
@@ -59,10 +59,17 @@ def worker(queue: Queue, domain: str):
     # use public DNS servers for faster resolution
     resolver.nameservers = ["8.8.8.8", "1.1.1.1", "8.8.4.4"]
 
-    while not queue.empty():
-        subdomain = queue.get()
-        resolve_subdomain(subdomain, domain, resolver)
-        queue.task_done()
+    while True:
+        try:
+            subdomain = queue.get_nowait()
+        except Empty:
+            return
+        try:
+            resolve_subdomain(subdomain, domain, resolver)
+        except Exception as exc:
+            print(f"[-] Subdomain lookup failed for {subdomain}: {exc}")
+        finally:
+            queue.task_done()
 
 
 def main():
