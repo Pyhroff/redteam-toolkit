@@ -161,7 +161,8 @@ class Session:
             date_str = datetime.now().strftime("%Y%m%d")
             slug = self.target.replace(".", "_").replace(":", "_")
             path = SESSIONS_DIR / f"session_{date_str}_{slug}_{self.session_id}.json"
-        with open(path, "w") as f:
+        self._touch()
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(self._to_dict(), f, indent=2)
         return str(path)
 
@@ -173,6 +174,7 @@ class Session:
         s = cls(target=data["target"], name=data.get("name", ""),
                 session_id=data.get("session_id"))
         s.created_at    = data.get("created_at", _ts())
+        s.updated_at    = data.get("updated_at", s.created_at)
         s.opsec_score   = data.get("opsec_score", 0)
         s.ports         = data.get("ports", [])
         s.subdomains    = data.get("subdomains", [])
