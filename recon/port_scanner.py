@@ -157,7 +157,10 @@ def main():
         print(f"[-] Cannot resolve host: {args.target}")
         return
 
-    try:\n        ports = TOP_100 if args.top100 else parse_ports(args.ports)\n    except ValueError as exc:\n        parser.error(str(exc))
+    try:
+        ports = TOP_100 if args.top100 else parse_ports(args.ports)
+    except ValueError as exc:
+        parser.error(str(exc))
 
     print(f"\n[*] Scanning {args.target} ({ip})")
     print(f"[*] Ports: {len(ports)} | Threads: {args.threads} | Banner: {args.banner}")
