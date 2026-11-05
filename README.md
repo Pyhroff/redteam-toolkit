@@ -1,4 +1,4 @@
-# redteam-toolkit ⚔
+# redteam-toolkit
 
 Advanced Python toolkit for authorized red team engagements.
 Built from scratch for the BTech Cybersec → Red Team Consultant track.
@@ -21,25 +21,19 @@ Built from scratch for the BTech Cybersec → Red Team Consultant track.
 
 ---
 
-## What makes this different from existing frameworks
+## What's in it
 
-| Feature | Metasploit | Empire | reconftw | **This Toolkit** |
-|---------|-----------|--------|----------|-----------------|
-| OPSEC risk scoring | ❌ | ❌ | ❌ | ✅ `opsec_advisor.py` |
-| Engagement session tracker | ❌ | ❌ | ❌ | ✅ `core/session.py` |
-| Auto-chain orchestrator | ❌ | ❌ | Partial | ✅ `core/orchestrator.py` |
-| OSINT-aware password gen | ❌ | ❌ | ❌ | ✅ `smart_passwords.py` |
-| WAF detection + bypass hints | ❌ | ❌ | ❌ | ✅ `waf_detector.py` |
-| SE pretext builder + Cialdini | ❌ | ❌ | ❌ | ✅ `pretext_builder.py` |
-| Tech stack → CVE mapping | ❌ | ❌ | Partial | ✅ `tech_fingerprint.py` |
-| Linux privesc with GTFOBins | External | External | ❌ | ✅ `privesc_linux.py` |
-| LFI + wrapper + log poison | ❌ | ❌ | ❌ | ✅ `lfi_tester.py` |
+- **Engagement tooling:** an OPSEC risk advisor for planned actions (`opsec_advisor.py`), an engagement session tracker (`core/session.py`) and an orchestrator that chains recon output into follow-up modules (`core/orchestrator.py`).
+- **Recon and web:** tech-stack fingerprinting mapped to CVEs (`tech_fingerprint.py`), WAF detection with bypass hints (`waf_detector.py`), LFI testing with wrappers and log poisoning (`lfi_tester.py`).
+- **Post-exploitation and social engineering:** Linux privilege-escalation checks with GTFOBins references (`privesc_linux.py`), OSINT-aware password candidates (`smart_passwords.py`) and a pretext builder (`pretext_builder.py`).
+
+It is a learning-oriented toolkit written from scratch, not a replacement for Metasploit, Empire or reconftw, which cover far more and are maintained by large communities.
 
 ---
 
-## Windows AV — Do this first
+## Run it in a lab VM
 
-Defender **will quarantine** these files. Add an exclusion:
+Run the toolkit in an isolated lab VM (Kali, Parrot or a disposable Windows VM), not on your everyday machine. Defender and other AV products flag offensive scripts by design; on a dedicated lab VM you can scope an exclusion to the toolkit folder only:
 
 ```powershell
 # Run PowerShell as Administrator
